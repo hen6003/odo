@@ -1,0 +1,7 @@
+[[rule]]
+identity = "hs"
+password = false
+commands = ["whoami"]
+
+[[rule]]
+identity = ":wheel"
