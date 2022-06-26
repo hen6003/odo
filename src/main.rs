@@ -74,12 +74,22 @@ fn main() {
                 c.contains(&command.get_program().to_str().unwrap().to_string())
             })
         {
-            let mut auth = init_pam(&username);
+            // Ask for auth if required
+            if rule.auth.unwrap_or(true) {
+                let mut auth = init_pam(&username);
 
-            if rule.password.unwrap_or(true)
-                && (auth.authenticate().is_err() || auth.open_session().is_err())
-            {
-                println!("Authentication failed!");
+                if auth.authenticate().is_err() || auth.open_session().is_err() {
+                    println!("Authentication failed!");
+                    std::process::exit(1);
+                }
+            }
+
+            if let Some(target) = rule.r#as {
+                command.uid(
+                    users::get_user_by_name(&target)
+                        .expect("Invalid user")
+                        .uid(),
+                );
             }
 
             println!("Failed to execute command: {:?}", command.exec());

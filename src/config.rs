@@ -9,7 +9,7 @@ pub struct Config {
 
 #[derive(Deserialize, Debug)]
 pub struct Rule {
-    pub password: Option<bool>,
+    pub auth: Option<bool>,
     pub persist: Option<bool>,
 
     pub identity: String,

@@ -1,6 +1,11 @@
 [[rule]]
 identity = "hs"
 password = false
+commands = ["env"]
+
+[[rule]]
+identity = ":wheel"
+as = "_greeter"
 commands = ["whoami"]
 
 [[rule]]
