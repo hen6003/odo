@@ -5,6 +5,7 @@ use std::{os::unix::process::CommandExt, process::Command};
 
 mod config;
 mod handler;
+mod password;
 
 const SERVICE_NAME: &str = "odo";
 
@@ -26,8 +27,11 @@ fn get_command() -> Command {
     command
 }
 
-fn init_pam(username: &str) -> pam::Authenticator<'static, handler::ConvHandler> {
-    let handler = handler::ConvHandler::new(username);
+fn init_pam(
+    username: &str,
+    mask: Option<char>,
+) -> pam::Authenticator<'static, handler::ConvHandler> {
+    let handler = handler::ConvHandler::new(username, mask);
 
     pam::Authenticator::with_handler(SERVICE_NAME, handler).unwrap()
 }
@@ -76,7 +80,7 @@ fn main() {
         {
             // Ask for auth if required
             if rule.auth.unwrap_or(true) {
-                let mut auth = init_pam(&username);
+                let mut auth = init_pam(&username, config.mask);
 
                 if auth.authenticate().is_err() || auth.open_session().is_err() {
                     println!("Authentication failed!");

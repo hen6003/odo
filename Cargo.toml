@@ -7,10 +7,8 @@ edition = "2021"
 
 [dependencies]
 pam = "*"
-rustyline = "*"
-rustyline-derive = "*"
-unicode-width = "*"
 users = "*"
 serde = "*"
 serde_derive = "*"
 toml = "*"
+console = "*"

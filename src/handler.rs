@@ -1,48 +1,19 @@
 use std::{
     borrow::Cow::{self, Borrowed, Owned},
     ffi::{CStr, CString},
+    io::{stdout, Write},
 };
 
-use rustyline::{config::Configurer, highlight::Highlighter, ColorMode, Editor};
-use rustyline_derive::{Completer, Helper, Hinter, Validator};
-
-#[derive(Completer, Helper, Hinter, Validator)]
-struct MaskingHighlighter {
-    masking: bool,
-}
-
-impl Highlighter for MaskingHighlighter {
-    fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {
-        use unicode_width::UnicodeWidthStr;
-        if self.masking {
-            Owned("*".repeat(line.width()))
-        } else {
-            Borrowed(line)
-        }
-    }
-
-    fn highlight_char(&self, _line: &str, _pos: usize) -> bool {
-        self.masking
-    }
-}
-
 pub struct ConvHandler {
+    password_mask: Option<char>,
     username: String,
-    rl: Editor<MaskingHighlighter>,
 }
 
 impl ConvHandler {
-    pub fn new(username: &str) -> Self {
-        let mut rl = Editor::new();
-        let h = MaskingHighlighter { masking: true };
-
-        rl.set_helper(Some(h));
-        rl.set_color_mode(ColorMode::Forced); // force masking
-        rl.set_auto_add_history(false); // make sure password is not added to history
-
+    pub fn new(username: &str, password_mask: Option<char>) -> Self {
         Self {
             username: username.to_string(),
-            rl,
+            password_mask,
         }
     }
 }
@@ -53,9 +24,14 @@ impl pam::Converse for ConvHandler {
     }
 
     fn prompt_blind(&mut self, msg: &CStr) -> Result<CString, ()> {
-        let readline = self.rl.readline(msg.to_str().unwrap()).unwrap();
+        print!("{}", msg.to_str().map_err(|_| ())?);
+        stdout().flush().map_err(|_| ())?;
 
-        CString::new(readline).map_err(|_| ())
+        let password = crate::password::read_password(self.password_mask).map_err(|_| ())?;
+
+        println!();
+
+        CString::new(password).map_err(|_| ())
     }
 
     fn info(&mut self, msg: &CStr) {

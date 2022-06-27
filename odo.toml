@@ -1,3 +1,5 @@
+mask = '*'
+
 [[rule]]
 identity = "hs"
 password = false

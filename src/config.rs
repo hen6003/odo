@@ -4,6 +4,7 @@ use serde_derive::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
+    pub mask: Option<char>,
     pub rule: Vec<Rule>,
 }
 
