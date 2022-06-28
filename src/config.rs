@@ -18,4 +18,7 @@ pub struct Rule {
     pub r#as: Option<String>,
 
     pub commands: Option<Vec<String>>,
+
+    pub keepenv: Option<bool>,
+    //pub setenv = Option<Vec
 }

@@ -5,11 +5,14 @@ use std::io::Read;
 
 use std::{os::unix::process::CommandExt, process::Command};
 
+use etc_passwd::Passwd;
+
 mod config;
 mod handler;
 mod password;
 
 const SERVICE_NAME: &str = "odo";
+const SAFE_PATH: &str = "/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin";
 
 fn get_config() -> std::io::Result<config::Config> {
     let mut file = File::open("odo.toml")?;
@@ -110,6 +113,28 @@ fn main() {
                     .filter(|g| *g != users::get_effective_gid()) // Remove current effective gid
                     .collect::<Vec<u32>>(),
             );
+
+            // Set environment
+            if !rule.keepenv.unwrap_or(false) {
+                command.env_clear();
+            }
+
+            let passwd = Passwd::from_uid(user.uid()).unwrap().unwrap();
+
+            command.env("PATH", SAFE_PATH);
+            command.env("LOGNAME", user.name());
+            command.env("USER", user.name());
+            command.env("SHELL", passwd.shell.to_str().unwrap());
+
+            if let Ok(term) = std::env::var("TERM") {
+                command.env("TERM", term);
+            }
+
+            if let Ok(display) = std::env::var("DISPLAY") {
+                command.env("DISPLAY", display);
+            }
+
+            command.env("DOAS_USER", users::get_current_username().unwrap());
 
             // Execute command, exec() call will not return unless there is an error
             println!("Failed to execute command: {:?}", command.exec());
