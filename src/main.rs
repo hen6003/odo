@@ -96,17 +96,22 @@ fn main() {
                 users::get_user_by_uid(0).expect("Failed to get root user")
             };
 
+            // Set new UID and groups of process
             command.uid(user.uid());
             command.gid(user.primary_group_id());
+
+            // Potentially should be reworked
             command.groups(
                 &user
                     .groups()
                     .expect("Failed to read users groups")
                     .into_iter()
                     .map(|g| g.gid())
+                    .filter(|g| *g != users::get_effective_gid()) // Remove current effective gid
                     .collect::<Vec<u32>>(),
             );
 
+            // Execute command, exec() call will not return unless there is an error
             println!("Failed to execute command: {:?}", command.exec());
             std::process::exit(1);
         }

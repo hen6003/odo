@@ -7,8 +7,8 @@ commands = ["env"]
 
 [[rule]]
 identity = ":wheel"
-as = "_greeter"
-commands = ["whoami"]
+#as = "_greeter"
+commands = ["id"]
 
 [[rule]]
 identity = ":wheel"
