@@ -1,3 +1,5 @@
+#![feature(setgroups)]
+
 use std::fs::File;
 use std::io::Read;
 
@@ -88,13 +90,22 @@ fn main() {
                 }
             }
 
-            if let Some(target) = rule.r#as {
-                command.uid(
-                    users::get_user_by_name(&target)
-                        .expect("Invalid user")
-                        .uid(),
-                );
-            }
+            let user = if let Some(target) = rule.r#as {
+                users::get_user_by_name(&target).expect("Invalid user")
+            } else {
+                users::get_user_by_uid(0).expect("Failed to get root user")
+            };
+
+            command.uid(user.uid());
+            command.gid(user.primary_group_id());
+            command.groups(
+                &user
+                    .groups()
+                    .expect("Failed to read users groups")
+                    .into_iter()
+                    .map(|g| g.gid())
+                    .collect::<Vec<u32>>(),
+            );
 
             println!("Failed to execute command: {:?}", command.exec());
             std::process::exit(1);
